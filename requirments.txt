@@ -1,0 +1,7 @@
+pandas
+matplotlib
+tensorflow-gpu
+numpy
+torchvision
+gym
+torch
