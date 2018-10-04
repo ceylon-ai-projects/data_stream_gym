@@ -1,26 +1,27 @@
 # data_stream_gym
 
-Use this simple lib for impliment RL methods with few 
+Use this simple lib for implement RL methods with few 
 
 ## Create environemt
 
-'''
+```
 class FxEnv(TradeEnvironment):
 
     @classmethod
     def __reward__(self, state, action):
         return -1 if action > 0 else 1
+```
+For futher development you need to implement your own Reward function
 
-'''
+Overide 
+def  __reward__(state,action)
 
-Overide get __reward__(state,action)
-funcation
 
 
 
 ## Create Agent
 
-'''
+```
 
 class FxTradeAgent(Agent):
 
@@ -31,17 +32,17 @@ class FxTradeAgent(Agent):
     def replay(self, memories):
         print(len(memories))
 
-'''
+```
 
 # Train algo
 
-'''
+```
+# Create Environment with data values
 fx_env = FxEnv(df.values)
-
-# print(state)
-
 pl = PlayGround(env=fx_env, agent=FxTradeAgent(), time_frame=4)
 pl.play()
+```
 
+## Licence
+MIT
 
-'''
