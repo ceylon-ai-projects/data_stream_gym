@@ -39,6 +39,7 @@ sample_op = tf.multinomial(logits=tf.reshape(Ylogits, shape=(1, 3)), num_samples
 # loss
 cross_entropies = tf.losses.softmax_cross_entropy(onehot_labels=tf.one_hot(actions, action_size),
                                                   logits=Ylogits)
+
 loss = tf.reduce_sum(rewards * cross_entropies)
 
 # Training Operation
@@ -63,12 +64,14 @@ class FxEnv(TradeEnvironment):
 
     @classmethod
     def __reward__(self, state, action, state_t):
-        diff = state_t[:1] - state[:1]
-        actual_action = dif_to_action(diff)
-        if actual_action - action == 0:
-            return 1
-        else:
-            return -1
+        if state_t is not None and state is not None:
+            diff = state_t[:1] - state[:1]
+            actual_action = dif_to_action(diff)
+            if actual_action - action == 0:
+                return 1
+            else:
+                return -1
+        return 0
 
 
 class FxTradeAgent(Agent):
@@ -107,7 +110,20 @@ class FxTradeAgent(Agent):
             self.sess.run(train_op, feed_dict=feed_dict)
 
         saver.save(self.sess, save_path=model_path)
-        file_writer = tf.summary.FileWriter(log_path, self.sess.graph)
+
+        with tf.name_scope('cross_entropy'):
+            tf.summary.scalar('cross_entropy', cross_entropies)
+
+        with tf.name_scope('accuracy'):
+            with tf.name_scope('correct_prediction'):
+                correct_prediction = tf.equal(tf.argmax(Y, 1), tf.argmax(Ylogits, 1))
+            with tf.name_scope('accuracy'):
+                accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            tf.summary.scalar('accuracy', accuracy)
+        merged = tf.summary.merge_all()
+
+        # file_writer = tf.summary.FileWriter(log_path, self.sess.graph)
+        file_writer = tf.summary.FileWriter(log_path)
 
 
 pair_name = "EURUSD"
