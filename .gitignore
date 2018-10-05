@@ -1,4 +1,6 @@
 data/
 config/
+logs/
+model_saved/
 .idea
 *.iml

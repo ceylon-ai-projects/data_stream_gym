@@ -7,6 +7,17 @@ from environment.Environment import TradeEnvironment
 from preprocess.data_pre_process import create_data_frame
 
 import tensorflow as tf
+import os
+
+dirname = os.path.dirname(__file__)
+base_path = dirname + "/model_saved"
+model_path = "{}/model".format(base_path)
+
+base_path = dirname + "/logs"
+log_path = "{}".format(base_path)
+
+print("Model path => {}".format(model_path))
+print("Log path => {}".format(log_path))
 
 obs_length = 21
 action_size = 3
@@ -36,6 +47,8 @@ train_op = optimizer.minimize(loss)
 
 init_op = tf.initialize_all_variables()
 
+saver = tf.train.Saver()
+
 
 def dif_to_action(diff):
     if diff < 0:
@@ -58,24 +71,13 @@ class FxEnv(TradeEnvironment):
             return -1
 
 
-def discount_rewards(r, gamma):
-    """ take 1D float array of rewards and compute discounted reward """
-    r = np.array(r)
-    discounted_r = np.zeros_like(r)
-    running_add = 0
-    for t in reversed(range(0, r.size)):
-        if r[t] != 0: running_add = 0  # reset the sum, since this was a game boundary (pong specific!)
-        running_add = running_add * gamma + r[t]
-        discounted_r[t] = running_add
-    return discounted_r.tolist()
-
-
 class FxTradeAgent(Agent):
 
     @classmethod
     def after_init(self):
         self.sess = tf.Session()
         self.sess.run(init_op)
+        file_writer = tf.summary.FileWriter(log_path, self.sess.graph)
 
     def act(self, state):
         if state is not None:
@@ -103,6 +105,9 @@ class FxTradeAgent(Agent):
                 actions: action_t_pre
             }
             self.sess.run(train_op, feed_dict=feed_dict)
+
+        saver.save(self.sess, save_path=model_path)
+        file_writer = tf.summary.FileWriter(log_path, self.sess.graph)
 
 
 pair_name = "EURUSD"
