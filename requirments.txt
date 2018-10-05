@@ -5,3 +5,4 @@ numpy
 torchvision
 gym
 torch
+ta==0.2.0

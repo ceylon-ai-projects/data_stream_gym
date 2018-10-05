@@ -17,10 +17,13 @@ class PlayGround(object):
 
             if steps % self.time_frame == 0:
                 if agent_act:
-                    reward_t = self.env.calculate_reward(state_t_pre, action_t_pre)
+                    reward_t_pre = self.env.calculate_reward(state_t_pre, action_t_pre, state_t)
                     # Recode history
-                    self.reward_history.append((steps, reward_t))
-                    self.agent.memorize(state_t_pre, action_t_pre, reward_t, state_t, done)
+
+                    # print(state_t_pre[:1], action_t_pre, state_t[:1], reward_t_pre)
+
+                    self.reward_history.append((steps, reward_t_pre))
+                    self.agent.memorize(state_t_pre, action_t_pre, reward_t_pre, state_t, done)
                     agent_act = False
 
                 if agent_act is False:

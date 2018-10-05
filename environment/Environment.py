@@ -5,11 +5,11 @@ class TradeEnvironment(object):
         self.pre_state = None
 
     @classmethod
-    def __reward__(self, state, action):
+    def __reward__(self, state, action, next_state):
         return 0
 
-    def calculate_reward(self, state, action):
-        reward = self.__reward__(state, action)
+    def calculate_reward(self, state, action, next_state):
+        reward = self.__reward__(state, action, next_state)
         return reward
 
     def get_next_state(self):

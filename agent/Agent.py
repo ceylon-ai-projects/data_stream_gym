@@ -13,6 +13,11 @@ class Agent(object):
         self.replay_prob = replay_prob
         self.max_length = max_length
         self.__memory__ = deque(maxlen=self.max_length)
+        self.after_init()
+
+    @classmethod
+    def after_init(self):
+        pass
 
     @classmethod
     def act(self, state):
@@ -24,6 +29,7 @@ class Agent(object):
 
     def memorize(self, state_t, action_t, reward_t, state_t_next, done):
         self.__memory__.append((state_t, action_t, reward_t, state_t_next, done))
+        evaluate_request = False
         if len(self.__memory__) == self.__memory__.maxlen:
             if random.uniform(0, 1) <= self.replay_prob:
                 self.replay(self.__memory__)
@@ -33,3 +39,6 @@ class Agent(object):
                     self.__memory__.pop()
 
             self.__memory__.pop()  # forgot first
+            evaluate_request = True
+
+        return evaluate_request
