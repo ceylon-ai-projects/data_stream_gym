@@ -31,6 +31,8 @@ rewards = tf.placeholder(shape=[None], dtype=tf.float32)
 
 # model
 Y = tf.layers.dense(observations, 200, activation=tf.nn.relu)
+Y = tf.layers.dense(Y, 100, activation=tf.nn.relu)
+Y = tf.layers.dense(Y, 50, activation=tf.nn.relu)
 Ylogits = tf.layers.dense(Y, action_size)
 
 # Sample an action from predicted probabilities
@@ -75,32 +77,53 @@ class FxEnv(TradeEnvironment):
 
 
 class FxTradeAgent(Agent):
+    epsilon = 0.5
+    epsilon_decay = 0.995
+    train_agent = True
 
     @classmethod
     def after_init(self):
         self.sess = tf.Session()
-        self.sess.run(init_op)
+
+        saver.restore(self.sess, model_path)
+        # self.sess.run(init_op)
         file_writer = tf.summary.FileWriter(log_path, self.sess.graph)
 
-    def act(self, state):
+    def get_policy_decision(self, state):
         if state is not None:
             state = np.reshape(state, (1, obs_length))
             return self.sess.run(sample_op, feed_dict={observations: state})
         return np.argmax(np.random.randint(1, 3, self.action_size))
 
-    @classmethod
+    def act(self, state):
+        # Act with epslion on traning process
+        if self.train_agent is False:
+            return self.get_policy_decision(state)
+        else:
+            if np.random.rand() >= self.epsilon:
+                return self.get_policy_decision(state)
+            else:
+                return np.argmax(np.random.randint(1, 3, self.action_size))
+
+    def after_memories(self, train_status):
+        if train_status:
+            self.epsilon = self.epsilon * self.epsilon_decay
+
     def replay(self, memories):
+
         for state_t_pre, action_t_pre, reward_t_pre, state_t, done in memories:
+            # if action_t_pre !=0:
+            #     print(action_t_pre)
+
             action_t_pre = np.array(action_t_pre)
             reward_t_pre = np.array(reward_t_pre)
             state_t_pre = np.array(state_t_pre)
-
             # Reshape Inputs
-            action_t_pre = np.reshape(action_t_pre, (action_t_pre.shape[0],))
+            action_t_pre = np.reshape(action_t_pre, (1,))
             reward_t_pre = np.reshape(reward_t_pre, (1,))
             state_t_pre = np.reshape(state_t_pre, (1, state_t_pre.shape[0]))
 
-            # print(action_t_pre.shape, action_t_pre.shape, action_t_pre.shape)
+            # print(state_t_pre, action_t_pre, reward_t_pre, state_t)
 
             feed_dict = {
                 rewards: reward_t_pre,
@@ -140,11 +163,14 @@ emi_range = [3, 89]
 aroon_range = [3, 21, 89]
 dpo_range = [3, 21, 89]
 
-chunk_size = 2e5
+chunk_size = 2e4
 
-fx_agent = FxTradeAgent(max_length=100)
+fx_agent = FxTradeAgent(max_length=20000)
 
-data_frames = get_data_chunk(pair_name, interval, chunk_size=10000)
+data_frames = get_data_chunk(pair_name, interval,
+                             chunk_size=chunk_size)
+
+playground_step = 0
 
 for data_frame in data_frames:
     print("\n----Start Processing Another Chunk of Data ----")
@@ -167,5 +193,9 @@ for data_frame in data_frames:
     fx_env = FxEnv(df.values)
 
     # print(state)
-    pl = PlayGround(env=fx_env, agent=fx_agent, time_frame=1)
+    pl = PlayGround(env=fx_env,
+                    agent=fx_agent,
+                    time_frame=1,
+                    playground_step=playground_step)
     pl.play()
+    playground_step += 1

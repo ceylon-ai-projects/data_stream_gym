@@ -27,6 +27,10 @@ class Agent(object):
     def replay(self, memories):
         pass
 
+    @classmethod
+    def after_memories(self, train_status):
+        pass
+
     def memorize(self, state_t, action_t, reward_t, state_t_next, done):
         self.__memory__.append((state_t, action_t, reward_t, state_t_next, done))
         evaluate_request = False
@@ -37,8 +41,10 @@ class Agent(object):
                 # Randomly forgot memories
                 for f in range(int(len(self.__memory__) * (random.uniform(0, self.forget_rate)))):
                     self.__memory__.pop()
+                print("Left Memeory Length {}".format(len(self.__memory__)))
 
             self.__memory__.pop()  # forgot first
             evaluate_request = True
+            self.after_memories(evaluate_request)
 
         return evaluate_request
